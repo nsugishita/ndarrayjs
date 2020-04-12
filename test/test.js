@@ -58,6 +58,21 @@ QUnit.test('np.isndarray', function(assert) {
 });
 
 
+QUnit.test('np.helper.is_array_buffer_supported', function(assert) {
+    if (np.helper.is_array_buffer_supported) {
+        assert.ok(
+            np.helper.ArrayBufferFloat64 !== undefined,
+            'ArrayBuffer of float 64 must be defined'
+        );
+    } else {
+        assert.ok(
+            np.helper.ArrayBufferFloat64 === undefined,
+            'ArrayBuffer of float 64 must be undefined'
+        );
+    }
+});
+
+
 QUnit.test('np.testing.assert_arraylike', function(assert) {
     np.testing.assert_arraylike([1, Infinity, 3]);
     np.testing.assert_arraylike([[1, Infinity, 3]]);
