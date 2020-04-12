@@ -1,3 +1,5 @@
 {
-    "esversion": 5
+    "esversion": 6,
+    "browser": true,
+    "node": true
 }
