@@ -22,9 +22,7 @@ QUnit.test('np.ndarray', function(assert) {
 QUnit.test('np.asarray', function(assert) {
     function impl() {
         let a = np.asarray([1, 2, 3, 4, 5, 6], [2, 3], 'float32');
-        assert.equal(a.shape.length, 2);
-        assert.equal(a.shape[0], 2);
-        assert.equal(a.shape[1], 3);
+        np.testing.assert_allclose(a.shape, [2, 3], {assert: assert});
         assert.throws(
             function() {
                 np.asarray([1, 2, 3, 4, 5], [2, 3], 'float32');
@@ -40,10 +38,7 @@ QUnit.test('np.asarray', function(assert) {
             "should raise an error on invalid shape"
         );
         a.shape = [1, 3, 2];
-        assert.equal(a.shape.length, 3);
-        assert.equal(a.shape[0], 1);
-        assert.equal(a.shape[1], 3);
-        assert.equal(a.shape[2], 2);
+        np.testing.assert_allclose(a.shape, [1, 3, 2], {assert: assert});
     }
 
     if (np.helper.is_es6_supported) {
