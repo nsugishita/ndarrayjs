@@ -1,0 +1,42 @@
+{
+  "name": "ndarray",
+  "version": "0.1.0",
+  "description": "lightweight script to handle numpy data in javascript",
+  "main": "lib/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "jszip": "^3.3.0",
+    "jszip-utils": "^0.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.5",
+    "babelify": "^10.0.0",
+    "browserify": "^16.5.1",
+    "grunt": "^1.1.0",
+    "grunt-browserify": "^5.3.0",
+    "grunt-contrib-jshint": "^2.1.0",
+    "grunt-contrib-uglify": "^4.0.1",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-shell": "^3.0.1",
+    "qunit": "^2.9.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suginagi/ndarrayjs.git"
+  },
+  "author": {
+    "name": "Nagisa Sugishita",
+    "email": "s1576972@ed.ac.uk"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/suginagi/ndarrayjs/issues"
+  },
+  "homepage": "https://github.com/suginagi/ndarrayjs#readme"
+}
