@@ -58,6 +58,50 @@ QUnit.test('np.isndarray', function(assert) {
 });
 
 
+QUnit.test('np.getitem', function(assert) {
+    var a;
+    a = np.asarray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [12], np.float);
+    assert.equal(np.getitem(a, [1]), 2, 'getitem should get an element');
+    assert.equal(np.getitem(a, [7]), 8, 'getitem should get an element');
+    assert.equal(np.getitem(a, [-3]), 10, 'getitem should get an element');
+
+    a = np.asarray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [2, 3, 2], np.float);
+    /*
+     * [[[ 1, 2],
+     *   [ 3, 4],
+     *   [ 5, 6]],
+     *
+     *  [[ 7, 8],
+     *   [ 9,10],
+     *   [11,12]]]
+     */
+    assert.equal(np.getitem(a, [0, 0, 1]), 2, 'getitem should get an element');
+    assert.equal(np.getitem(a, [1, 0, 1]), 8, 'getitem should get an element');
+    assert.equal(np.getitem(a, [-1, 2, -1]), 12, 'getitem should get an element');
+
+    a = np.asarray([true, true, false, false], [2, 2], np.bool);
+    /*
+     * [[T, T],
+     *  [F, F]]
+     */
+    assert.equal(np.getitem(a, [0, 0]), true, 'getitem should get an element');
+    assert.equal(np.getitem(a, [1, 0]), false, 'getitem should get an element');
+
+    a = np.asarray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [12], np.float);
+    a._shape = [2, 2];
+    a.offset = 3;
+    a.stride = [4, -1];
+    /*
+     * [[4, 3],
+     *  [8, 7]]
+     */
+    assert.equal(np.getitem(a, [0, 0]), 4, 'getitem should get an element');
+    assert.equal(np.getitem(a, [0, 1]), 3, 'getitem should get an element');
+    assert.equal(np.getitem(a, [1, 0]), 8, 'getitem should get an element');
+    assert.equal(np.getitem(a, [1, 1]), 7, 'getitem should get an element');
+});
+
+
 QUnit.test('np.dtype', function(assert) {
     assert.equal(np.dtype('b'), np.int8, 'b == np.int8');
 
