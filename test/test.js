@@ -132,12 +132,12 @@ QUnit.test('np.dtype', function(assert) {
 QUnit.test('np.helper.is_array_buffer_supported', function(assert) {
     if (np.helper.is_array_buffer_supported) {
         assert.ok(
-            np.helper.ArrayBufferFloat64 !== undefined,
+            np.dtype.arraybuffer.float64 !== undefined,
             'ArrayBuffer of float 64 must be defined'
         );
     } else {
         assert.ok(
-            np.helper.ArrayBufferFloat64 === undefined,
+            np.dtype.arraybuffer.float64 === undefined,
             'ArrayBuffer of float 64 must be undefined'
         );
     }
