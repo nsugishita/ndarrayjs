@@ -58,7 +58,7 @@ module.exports = function(grunt) {
             },
             lib: {
                 files: '<%= jshint.lib.src %>',
-                tasks: ['jshint:lib', 'browserify', 'shell:test']
+                tasks: ['jshint:lib', 'shell:test']
             },
             test: {
                 files: '<%= jshint.test.src %>',
@@ -77,7 +77,7 @@ module.exports = function(grunt) {
     grunt.registerTask('dist', ['browserify', 'shell:test', 'uglify']);
 
     // Run test on source codes.
-    grunt.registerTask('test', ['jshint', 'browserify', 'shell:test']);
+    grunt.registerTask('test', ['jshint', 'shell:test']);
 
     // By default, run test.
     grunt.registerTask('default', ['test']);

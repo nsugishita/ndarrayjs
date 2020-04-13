@@ -1,7 +1,7 @@
 var test_numpy_is_node = typeof exports !== 'undefined';
 
 if (test_numpy_is_node) {
-    np = require('../dist/ndarray.js');
+    np = require('../lib/index.js');
 }
 
 QUnit.test('np.ndarray', function(assert) {
