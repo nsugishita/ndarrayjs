@@ -58,6 +58,77 @@ QUnit.test('np.isndarray', function(assert) {
 });
 
 
+QUnit.test('np.dtype', function(assert) {
+    assert.equal(np.dtype('b'), np.int8, 'b == np.int8');
+
+    assert.equal(np.dtype('b1'), np.bool, 'b1 == np.bool');
+    assert.equal(np.dtype('bool'), np.bool, "np.dtype('bool') == np.bool");
+    assert.equal(np.dtype(np.bool), np.bool, 'np.dtype(np.bool) == np.bool');
+
+    assert.equal(np.dtype('i'), np.int, 'i == np.int');
+    assert.equal(np.dtype('int'), np.int, "np.dtype('int') == np.int");
+    assert.equal(np.dtype(np.int), np.int, 'np.dtype(np.int) == np.int');
+
+    assert.equal(np.dtype('i1'), np.int8, 'i1 == np.int8');
+    assert.equal(np.dtype('int8'), np.int8, "np.dtype('int8') == np.int8");
+    assert.equal(np.dtype(np.int8), np.int8, 'np.dtype(np.int8) == np.int8');
+
+    assert.equal(np.dtype('i2'), np.int16, 'i2 == np.int16');
+    assert.equal(np.dtype('int16'), np.int16, "np.dtype('int16') == np.int16");
+    assert.equal(np.dtype(np.int16), np.int16, 'np.dtype(np.int16) == np.int16');
+
+    assert.equal(np.dtype('i4'), np.int32, 'i4 == np.int32');
+    assert.equal(np.dtype('int32'), np.int32, "np.dtype('int32') == np.int32");
+    assert.equal(np.dtype(np.int32), np.int32, 'np.dtype(np.int32) == np.int32');
+
+    assert.equal(np.dtype('i8'), np.int64, 'i8 == np.int64');
+    assert.equal(np.dtype('int64'), np.int64, "np.dtype('int64') == np.int64");
+    assert.equal(np.dtype(np.int64), np.int64, 'np.dtype(np.int64) == np.int64');
+
+    assert.equal(np.dtype('L'), np.uint, 'L == np.uint');
+    assert.equal(np.dtype('uint'), np.uint, "np.dtype('uint') == np.uint");
+    assert.equal(np.dtype(np.uint), np.uint, 'np.dtype(np.uint) == np.uint');
+
+    assert.equal(np.dtype('u1'), np.uint8, 'u1 == np.uint8');
+    assert.equal(np.dtype('uint8'), np.uint8, "np.dtype('uint8') == np.uint8");
+    assert.equal(np.dtype(np.uint8), np.uint8, 'np.dtype(np.uint8) == np.uint8');
+
+    assert.equal(np.dtype('u2'), np.uint16, 'u2 == np.uint16');
+    assert.equal(np.dtype('uint16'), np.uint16, "np.dtype('uint16') == np.uint16");
+    assert.equal(np.dtype(np.uint16), np.uint16, 'np.dtype(np.uint16) == np.uint16');
+
+    assert.equal(np.dtype('u4'), np.uint32, 'u4 == np.uint32');
+    assert.equal(np.dtype('uint32'), np.uint32, "np.dtype('uint32') == np.uint32");
+    assert.equal(np.dtype(np.uint32), np.uint32, 'np.dtype(np.uint32) == np.uint32');
+
+    assert.equal(np.dtype('f'), np.float, 'f == np.float');
+    assert.equal(np.dtype('float'), np.float, "np.dtype('float') == np.float");
+    assert.equal(np.dtype(np.float), np.float, 'np.dtype(np.float) == np.float');
+
+    assert.equal(np.dtype('u8'), np.uint64, 'u8 == np.uint64');
+    assert.equal(np.dtype('uint64'), np.uint64, "np.dtype('uint64') == np.uint64");
+    assert.equal(np.dtype(np.uint64), np.uint64, 'np.dtype(np.uint64) == np.uint64');
+
+    assert.equal(np.dtype('f4'), np.float32, 'f4 == np.float32');
+    assert.equal(np.dtype('float32'), np.float32, "np.dtype('float32') == np.float32");
+    assert.equal(np.dtype(np.float32), np.float32, 'np.dtype(np.float32) == np.float32');
+
+    assert.equal(np.dtype('f8'), np.float64, 'f8 == np.float64');
+    assert.equal(np.dtype('float64'), np.float64, "np.dtype('float64') == np.float64");
+    assert.equal(np.dtype(np.float64), np.float64, 'np.dtype(np.float64) == np.float64');
+
+    assert.throws(
+        function() {np.dtype('i7');}, /invalid dtype/, "should raise an error"
+    );
+    assert.throws(
+        function() {np.dtype('x8');}, /invalid dtype/, "should raise an error"
+    );
+    assert.throws(
+        function() {np.dtype('i0');}, /invalid dtype/, "should raise an error"
+    );
+});
+
+
 QUnit.test('np.helper.is_array_buffer_supported', function(assert) {
     if (np.helper.is_array_buffer_supported) {
         assert.ok(
