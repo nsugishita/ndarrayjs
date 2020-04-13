@@ -102,6 +102,33 @@ QUnit.test('np.getitem', function(assert) {
 });
 
 
+QUnit.test('np.indexing.parse_slice', function(assert) {
+    var a;
+    a = np.indexing.parse_slice('3:4');
+    assert.ok(a instanceof np.indexing.Slice, "'3:4' should be a slice");
+    a = np.indexing.parse_slice('3:4:-1');
+    assert.ok(a instanceof np.indexing.Slice, "'3:4:-1' should be a slice");
+    a = np.indexing.parse_slice('30::5');
+    assert.ok(a instanceof np.indexing.Slice, "'30::5' should be a slice");
+    a = np.indexing.parse_slice(':-1');
+    assert.ok(a instanceof np.indexing.Slice, "':-1' should be a slice");
+    a = np.indexing.parse_slice(':4');
+    assert.ok(a instanceof np.indexing.Slice, "':4' should be a slice");
+    a = np.indexing.parse_slice('::-1');
+    assert.ok(a instanceof np.indexing.Slice, "'::-1' should be a slice");
+    a = np.indexing.parse_slice(30);
+    assert.ok(a === undefined, "30 should not be a slice");
+    a = np.indexing.parse_slice('30');
+    assert.ok(a === undefined, "'30' should not be a slice");
+    a = np.indexing.parse_slice(3.5);
+    assert.ok(a === undefined, "'3.5' should not be a slice");
+    a = np.indexing.parse_slice(null);
+    assert.ok(a === undefined, "'null' should not be a slice");
+    a = np.indexing.parse_slice([1, 2]);
+    assert.ok(a === undefined, "'[1, 2]' should not be a slice");
+});
+
+
 QUnit.test('np.dtype', function(assert) {
     assert.equal(np.dtype('b'), np.int8, 'b == np.int8');
 
