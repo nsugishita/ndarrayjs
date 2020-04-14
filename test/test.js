@@ -21,11 +21,17 @@ QUnit.test('np.ndarray', function(assert) {
 
 QUnit.test('np.asarray', function(assert) {
     function impl() {
-        let a = np.asarray([1, 2, 3, 4, 5, 6], [2, 3], 'float32');
+        var a;
+        a = np.asarray([1, 2, 3, 4, 5, 6], [2, 3], np.float32);
         np.testing.assert_allclose(a.shape, [2, 3], {assert: assert});
+        if (np.helper.use_arraybuffer()) {
+            assert.ok(a.buffer instanceof Float32Array);
+        } else {
+            assert.ok(Array.isArray(a.buffer));
+        }
         assert.throws(
             function() {
-                np.asarray([1, 2, 3, 4, 5], [2, 3], 'float32');
+                np.asarray([1, 2, 3, 4, 5], [2, 3], np.float32);
             },
             /invalid shape/,
             "should raise an error on invalid shape"
@@ -39,12 +45,20 @@ QUnit.test('np.asarray', function(assert) {
         );
         a.shape = [1, 3, 2];
         np.testing.assert_allclose(a.shape, [1, 3, 2], {assert: assert});
+
+        a = np.asarray([[1, 2, 3], [2, 3, 4], [3, 2, 3]], 0, np.int32);
+        np.testing.assert_allclose(a.shape, [3, 3]);
+        if (np.helper.use_arraybuffer()) {
+            assert.ok(a.buffer instanceof Int32Array);
+        } else {
+            assert.ok(Array.isArray(a.buffer));
+        }
     }
 
     if (np.helper.is_es6_supported) {
         impl();
     }
-    np.helper.es5mode();
+    np.helper.use_arraybuffer(false);
     impl();
 });
 
