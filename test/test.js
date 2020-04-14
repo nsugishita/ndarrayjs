@@ -72,6 +72,102 @@ QUnit.test('np.isndarray', function(assert) {
 });
 
 
+QUnit.test('np.arange', function(assert) {
+    var a;
+    a = np.arange(5);
+    np.testing.assert_allclose(a.shape, [5], {assert: assert});
+    np.testing.assert_allclose(np.helper.Arrayfrom(a.buffer), [0, 1, 2, 3, 4], {assert: assert});
+    assert.equal(a.dtype, np.int);
+
+    a = np.arange(2, 4);
+    np.testing.assert_allclose(a.shape, [2], {assert: assert});
+    np.testing.assert_allclose(np.helper.Arrayfrom(a.buffer), [2, 3], {assert: assert});
+    assert.equal(a.dtype, np.int);
+
+    a = np.arange(2, 10, 3);
+    np.testing.assert_allclose(a.shape, [3], {assert: assert});
+    np.testing.assert_allclose(np.helper.Arrayfrom(a.buffer), [2, 5, 8], {assert: assert});
+    assert.equal(a.dtype, np.int);
+
+    a = np.arange(17, 8, -3, np.float);
+    np.testing.assert_allclose(a.shape, [3], {assert: assert});
+    np.testing.assert_allclose(np.helper.Arrayfrom(a.buffer), [17, 14, 11], {assert: assert});
+    assert.equal(a.dtype, np.float);
+});
+
+
+QUnit.test('np.zeros', function(assert) {
+    var a;
+    a = np.zeros(5);
+    np.testing.assert_allclose(a.shape, [5], {assert: assert});
+    np.testing.assert_allclose(np.helper.Arrayfrom(a.buffer), [0, 0, 0, 0, 0], {assert: assert});
+    assert.equal(a.dtype, np.float);
+
+    a = np.zeros([2, 3]);
+    np.testing.assert_allclose(a.shape, [2, 3], {assert: assert});
+    np.testing.assert_allclose(
+        np.helper.Arrayfrom(a.buffer), [0, 0, 0, 0, 0, 0], {assert: assert});
+    assert.equal(a.dtype, np.float);
+
+    a = np.zeros([2, 2, 3], np.int);
+    np.testing.assert_allclose(a.shape, [2, 2, 3], {assert: assert});
+    np.testing.assert_allclose(
+        np.helper.Arrayfrom(a.buffer),
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        {assert: assert}
+    );
+    assert.equal(a.dtype, np.int);
+});
+
+
+QUnit.test('np.ones', function(assert) {
+    var a;
+    a = np.ones(5);
+    np.testing.assert_allclose(a.shape, [5], {assert: assert});
+    np.testing.assert_allclose(np.helper.Arrayfrom(a.buffer), [1, 1, 1, 1, 1], {assert: assert});
+    assert.equal(a.dtype, np.float);
+
+    a = np.ones([2, 3]);
+    np.testing.assert_allclose(a.shape, [2, 3], {assert: assert});
+    np.testing.assert_allclose(
+        np.helper.Arrayfrom(a.buffer), [1, 1, 1, 1, 1, 1], {assert: assert});
+    assert.equal(a.dtype, np.float);
+
+    a = np.ones([2, 2, 3], np.int);
+    np.testing.assert_allclose(a.shape, [2, 2, 3], {assert: assert});
+    np.testing.assert_allclose(
+        np.helper.Arrayfrom(a.buffer),
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        {assert: assert}
+    );
+    assert.equal(a.dtype, np.int);
+});
+
+
+QUnit.test('np.full', function(assert) {
+    var a;
+    a = np.full(5, 7);
+    np.testing.assert_allclose(a.shape, [5], {assert: assert});
+    np.testing.assert_allclose(np.helper.Arrayfrom(a.buffer), [7, 7, 7, 7, 7], {assert: assert});
+    assert.equal(a.dtype, np.int);
+
+    a = np.full([2, 3], 2.5);
+    np.testing.assert_allclose(a.shape, [2, 3], {assert: assert});
+    np.testing.assert_allclose(
+        np.helper.Arrayfrom(a.buffer), [2.5, 2.5, 2.5, 2.5, 2.5, 2.5], {assert: assert});
+    assert.equal(a.dtype, np.float);
+
+    a = np.full([2, 2, 3], 3, np.float);
+    np.testing.assert_allclose(a.shape, [2, 2, 3], {assert: assert});
+    np.testing.assert_allclose(
+        np.helper.Arrayfrom(a.buffer),
+        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+        {assert: assert}
+    );
+    assert.equal(a.dtype, np.float);
+});
+
+
 QUnit.test('np.getitem', function(assert) {
     var a;
     a = np.asarray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [12], np.float);
