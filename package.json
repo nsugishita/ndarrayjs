@@ -2,7 +2,7 @@
   "name": "ndarray",
   "version": "0.1.0",
   "description": "lightweight script to handle numpy data in javascript",
-  "main": "lib/index.js",
+  "main": "lib/main.js",
   "directories": {
     "test": "test"
   },
