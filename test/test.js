@@ -4,64 +4,133 @@ if (test_numpy_is_node) {
     np = require('../lib/main.js');
 }
 
+
 QUnit.test('constants', function(assert) {
     assert.ok(np.newaxis, 'np.newaxis must exist');
     assert.ok(np.Ellipsis, 'np.Ellipsis must exist');
 });
 
-QUnit.test('np.dtype', function(assert) {
+QUnit.module('dtype');
+
+QUnit.test('getter', function(assert) {
     assert.equal(np.dtype.get('i'), np.dtype.int, "np.dtype.get('i') == np.int");
     assert.equal(np.dtype.get('float'), np.dtype.float, "np.dtype.get('float') == np.float");
+});
+
+QUnit.test('can_cast', function(assert) {
     assert.ok(np.dtype.can_cast(np.dtype.int32, np.dtype.float64), 'int32 must be castable to float64');
     assert.ok(!np.dtype.can_cast(np.dtype.int32, np.dtype.uint64), 'int32 must not be castable to uint64');
 });
 
-QUnit.test('np.ndarray', function(assert) {
+QUnit.module('ndarray');
+
+QUnit.test('ndarray', function(assert) {
     np.testing.qunit_enable_deep_equal(assert);
     var a = new np.ndarray([1, 2, 3, 4, 5, 6, 7, 8], [2, 4]);
-    assert.deep_equal(a.shape, [2, 4], {assert: assert, comment: 'a.shape == [2, 4]'});
-    a = np.asarray([4, 5, -1]);
-    assert.deep_equal(a.shape, [3], {assert: assert, comment: 'array([4, 5, -1]).shape == [3]'});
-    assert.deep_equal(a.size, 3, {assert: assert, comment: 'array([4, 5, -1]).size== 3'});
-    assert.deep_equal(a.ndim, 1, {assert: assert, comment: 'array([4, 5, -1]).ndim == 1'});
-    assert.ok(a instanceof np.ndarray, 'array([4, 5, -1]) instanceof ndarray');
-    a = np.asarray([[3, 4], [4, 0], [-1, 1]]);
-    assert.deep_equal(a.shape, [3, 2], {assert: assert, comment: 'array([[3, 4], [4, 0], [-1, 1]]).shape == [3, 2]'});
-    assert.deep_equal(a.size, 6, {assert: assert, comment: 'array([[3, 4], [4, 0], [-1, 1]]).size == 6'});
-    assert.deep_equal(a.ndim, 2, {assert: assert, comment: 'array([[3, 4], [4, 0], [-1, 1]]).ndim == 2'});
-    assert.ok(a instanceof np.ndarray, 'array([[3, 4], [4, 0], [-1, 1]]) instanceof ndarray');
-    // assert.equal(a.shape[0], 2);
-    // assert.equal(a.shape[1], 4);
+    assert.deep_equal(a.shape, [2, 4], 'a.shape == [2, 4]');
 });
 
-QUnit.test('np.helper.get_nested_array_shape', function(assert) {
+QUnit.test('asarray', function(assert) {
     np.testing.qunit_enable_deep_equal(assert);
-    options = {allow_empty: true, throw_if_fail: true};
-    assert.deep_equal(
-        np.helper.get_nested_array_shape([], options),
-        [],
-        {assert: assert, comment: 'shape of [] == []'}
-    );
-    assert.deep_equal(
-        np.helper.get_nested_array_shape([3, 4], options),
-        [2],
-        {assert: assert, comment: 'shape of [3, 4] == [2]'}
-    );
-    assert.deep_equal(
-        np.helper.get_nested_array_shape([[4], [3]], options),
-        [2, 1],
-        {assert: assert, comment: 'shape of [[4], [3]] == [2, 1]'}
-    );
-    assert.deep_equal(
-        np.helper.get_nested_array_shape([[4, 5], [3, -6], [4, 0]], options),
-        [3, 2],
-        {assert: assert, comment: 'shape of [[4, 5], [3, -6], [4, 0]] == [3, 2]'}
-    );
-    assert.deep_equal(
-        np.helper.get_nested_array_shape([[[4], [5]], [[3], [-6]]], options),
-        [2, 2, 1],
-        {assert: assert, comment: 'shape of [[[4], [5]], [[3], [-6]]] == [2, 2, 1]'}
-    );
+    // test an array with shape specification
+    var a = np.asarray([1, 2, 3, 4, 5, 6, 7, 8], [2, 4]);
+    assert.deep_equal(a.tojs(), [[1, 2, 3, 4], [5, 6, 7, 8]]);
+    assert.deep_equal(a.shape, [2, 4], 'a.shape == [2, 4]');
+    // test an array with nan.
+    a = np.asarray([4, np.nan, -1]);
+    assert.deep_equal(a.tojs(), [4, np.nan, -1]);
+    assert.deep_equal(a.shape, [3], 'array([4, np.nan, -1]).shape == [3]');
+    assert.deep_equal(a.size, 3, 'array([4, np.nan, -1]).size== 3');
+    assert.deep_equal(a.ndim, 1, 'array([4, np.nan, -1]).ndim == 1');
+    assert.ok(a instanceof np.ndarray, 'array([4, np.nan, -1]) instanceof ndarray');
+    // test a structured array
+    a = np.asarray([[3, 4], [4, 0], [-1, 1]]);
+    assert.deep_equal(a.tojs(), [[3, 4], [4, 0], [-1, 1]]);
+    assert.deep_equal(a.shape, [3, 2], 'array([[3, 4], [4, 0], [-1, 1]]).shape == [3, 2]');
+    assert.deep_equal(a.size, 6, 'array([[3, 4], [4, 0], [-1, 1]]).size == 6');
+    assert.deep_equal(a.ndim, 2, 'array([[3, 4], [4, 0], [-1, 1]]).ndim == 2');
+    assert.ok(a instanceof np.ndarray, 'array([[3, 4], [4, 0], [-1, 1]]) instanceof ndarray');
+    // test offset
+    a = np.asarray([1, 2, 3, 4, 5, 6, 7, 8], [2, 3], np.int, 2);
+    assert.deep_equal(a.tojs(), [[3, 4, 5], [6, 7, 8]]);
+    assert.deep_equal(a.shape, [2, 3], 'array([[3, 4, 5], [6, 7, 8]]).shape == [2, 3]');
+    assert.deep_equal(a.size, 6, 'array([[3, 4, 5], [6, 7, 8]]).size == 6');
+    assert.deep_equal(a.ndim, 2, 'array([[3, 4, 5], [6, 7, 8]]).ndim == 2');
+    assert.ok(a instanceof np.ndarray, 'array([[3, 4, 5], [6, 7, 8]]) instanceof ndarray');
+    // test stride
+    // a = np.arange(12).reshape(3, 4).transpose()
+    a = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [4, 3], np.int, 0, [1, 4]);
+    assert.deep_equal(a.tojs(), [[0, 4, 8], [1, 5, 9], [2, 6, 10], [3, 7, 11]]);
+    assert.deep_equal(a.shape, [4, 3]);
+    assert.deep_equal(a.size, 12);
+    assert.deep_equal(a.ndim, 2);
+});
+
+QUnit.module('reshape');
+
+QUnit.test('reshape', function(assert) {
+    np.testing.qunit_enable_deep_equal(assert);
+    a = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    assert.deep_equal(a.shape, [12]);
+    b = a.reshape(3, 4);
+    assert.deep_equal(b.tojs(), [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]]);
+    assert.ok(np.shares_memory(a, b));
+    b = b.reshape(2, 3, 2);
+    assert.deep_equal(b.tojs(), [[[0, 1], [2, 3], [4, 5]], [[6, 7], [8, 9], [10, 11]]]);
+    assert.ok(np.shares_memory(a, b));
+
+    // test reshape on an array with noncontiguous data.
+    // a = np.arange(12).reshape(3, 4).transpose()
+    a = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [4, 3], np.int, 0, [1, 4]);
+    // assert.deep_equal(a.tojs(), [[0, 4, 8], [1, 5, 9], [2, 6, 10], [3, 7, 11]]);
+    b = a.reshape(2, 2, 3);  // This should be possible without copying data.
+    assert.deep_equal(b.tojs(), [[[0, 4, 8], [1, 5, 9]], [[2, 6, 10], [3, 7, 11]]]);
+    assert.ok(np.shares_memory(a, b));
+    b = a.reshape(2, 6);  // This is not possible without copying data.
+    assert.deep_equal(b.tojs(), [[0, 4, 8, 1, 5, 9], [2, 6, 10, 3, 7, 11]]);
+    assert.ok(!np.shares_memory(a, b));
+});
+
+QUnit.test('ascontiguous', function(assert) {
+    np.testing.qunit_enable_deep_equal(assert);
+    a = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [3, 4]);
+    b = np.ascontiguous(a);
+    assert.ok(a === b, 'ascontiguous returns an original instance if a contiguous array is given');
+
+    // test reshape on an array with noncontiguous data.
+    // a = np.arange(12).reshape(3, 4).transpose()
+    a = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [4, 3], np.int, 0, [1, 4]);
+    b = np.ascontiguous(a);
+    assert.ok(a !== b, 'ascontiguous returns a contiguous copy if necessary');
+    assert.deep_equal(a.tojs(), b.tojs(), 'resulting array should have the same shape and data');
+});
+
+QUnit.test('squeeze', function(assert) {
+    np.testing.qunit_enable_deep_equal(assert);
+    a = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [1, 3, 1, 4]);
+    b = np.squeeze(a, 0);
+    assert.deep_equal(b.shape, [3, 1, 4]);
+    assert.ok(np.shares_memory(a, b), 'a squeezed array should share memory with the original');
+    b = np.squeeze(a, -2);
+    assert.deep_equal(b.shape, [1, 3, 4]);
+    assert.ok(np.shares_memory(a, b), 'a squeezed array should share memory with the original');
+    b = np.squeeze(a);
+    assert.deep_equal(b.shape, [3, 4]);
+    assert.ok(np.shares_memory(a, b), 'a squeezed array should share memory with the original');
+});
+
+QUnit.test('squeeze', function(assert) {
+    np.testing.qunit_enable_deep_equal(assert);
+    a = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [3, 4]);
+    b = np.flatten(a, 0);
+    assert.deep_equal(b.tojs(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    assert.ok(np.shares_memory(a, b), 'a flattened array should share memory with the original if possible');
+
+    // test reshape on an array with noncontiguous data.
+    // a = np.arange(12).reshape(3, 4).transpose()
+    a = np.asarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [4, 3], np.int, 0, [1, 4]);
+    b = np.flatten(a);
+    assert.deep_equal(b.tojs(), [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]);
 });
 
 // QUnit.test('np.ndarray', function(assert) {
