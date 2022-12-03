@@ -66,6 +66,50 @@ QUnit.test('asarray', function(assert) {
     assert.deep_equal(a.ndim, 2);
 });
 
+QUnit.module('load');
+
+QUnit.test('load', function(assert) {
+    np.testing.qunit_enable_deep_equal(assert);
+    assert.expect(11);
+    // test an array with shape specification
+    var file = test_numpy_is_node ? "test/data.npz" : "data.npz";
+    return np.load(file).then(function (data) {
+        console.log(data);
+        assert.equal(data.x.ndim, 2);
+        assert.deep_equal(data.x.shape, [3, 4]);
+        assert.equal(data.y.ndim, 3);
+        assert.deep_equal(data.y.shape, [2, 3, 2]);
+        assert.deep_equal(data.y.tojs(), [
+            [
+                [2, 8],
+                [0, 6],
+                [4, 5],
+            ], [
+                [1, 1],
+                [8, 9],
+                [3, 6],
+            ],
+        ]);
+        assert.equal(data.z.ndim, 1);
+        assert.deep_equal(data.z.shape, [10]);
+        assert.deep_equal(data.z.tojs(), [
+            BigInt(0),
+            BigInt(1),
+            BigInt(2),
+            BigInt(3),
+            BigInt(4),
+            BigInt(5),
+            BigInt(6),
+            BigInt(7),
+            BigInt(8),
+            BigInt(9),
+        ]);
+        assert.equal(data.w.ndim, 1);
+        assert.deep_equal(data.w.shape, [5]);
+        assert.deep_equal(data.w.tojs(), [1, 1, 0, 0, 0]);
+    });
+});
+
 QUnit.module('reshape');
 
 QUnit.test('reshape', function(assert) {
