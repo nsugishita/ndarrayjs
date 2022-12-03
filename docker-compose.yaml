@@ -1,0 +1,8 @@
+version: '1'
+services:
+  grunt:
+    build: .
+    command: sh -c "npm install && grunt watch"
+    working_dir: /root
+    volumes:
+      - .:/root:cached

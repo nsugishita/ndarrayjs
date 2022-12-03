@@ -10,6 +10,7 @@ dist
 
 # npm
 node_modules
+.npm
 
 
 # python
