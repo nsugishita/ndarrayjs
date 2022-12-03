@@ -70,7 +70,7 @@ QUnit.module('load');
 
 QUnit.test('load', function(assert) {
     np.testing.qunit_enable_deep_equal(assert);
-    assert.expect(11);
+    assert.expect(13);
     // test an array with shape specification
     var file = test_numpy_is_node ? "test/data.npz" : "data.npz";
     return np.load(file).then(function (data) {
@@ -88,6 +88,16 @@ QUnit.test('load', function(assert) {
                 [1, 1],
                 [8, 9],
                 [3, 6],
+            ],
+        ]);
+        assert.deep_equal(data.y.get(":,:2,:").shape, [2, 2, 2]);
+        assert.deep_equal(data.y.get(":,:2,:").tojs(), [
+            [
+                [2, 8],
+                [0, 6],
+            ], [
+                [1, 1],
+                [8, 9],
             ],
         ]);
         assert.equal(data.z.ndim, 1);

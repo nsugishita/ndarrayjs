@@ -10,12 +10,18 @@ This library loads npz files and runs simple operations on the loaded data.
 ```js
 (async function() {
    data = await np.load("data.npz");
+
    // Get the shape of `z` as an array. E.g., [2, 2]
-   console.log(data.z.shape);
+   data.z.shape;
+
    // Get the data as an array. E.g., [[1, 2], [3, 4]]
-   console.log(data.z.tojs());
+   data.z.tojs();
+
    // Compute the sum over axis 1. E.g., [3, 7]
-   console.log(data.z.sum(1).tojs());
+   data.z.sum(1).tojs();
+
+   // Apply indexing. E.g., [2, 4]
+   data.z.get(":,1").tojs();
 })();
 ```
 
