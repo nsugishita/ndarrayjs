@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: helper.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: helper.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use strict";
+
+// globally module.exports, namely available as np.xxx as well as np.helper.xxx.
+var globally_exported = {};
+
+module.exports._set_alias = function(np) {
+    var key;
+    for (key in globally_exported) {
+        np[key] = globally_exported[key];
+    }
+};
+
+/**
+ * Version number of IE or 0 in another browser or node.
+ * https://stackoverflow.com/questions/19999388/check-if-user-is-using-ie
+ */
+module.exports.msieversion = (function() {
+    if (typeof window == 'undefined') {
+        // This is not running in a browser (i.e. this is Node.js).
+        return 0;
+    }
+    var ua = window.navigator.userAgent.toLowerCase();
+    if (ua.match(/trident.*rv\:11\./)) {
+        return 11;
+    } else if (ua.indexOf('msie')> 0) {
+        // If Internet Explorer, return version number
+        return parseInt(ua.split('msie')[1]);
+    } else {
+        // If another browser, return 0
+        return 0;
+    }
+})();
+
+module.exports.is_array_buffer_supported =
+    (module.exports.msieversion == 0 || module.exports.msieversion >= 10);
+
+/**
+ * If called without arguments, return whether array buffers
+ * should be used or not.
+ * If called with an argument, overwrite the current mode
+ * to the given value.
+ * @param {boolean} mode
+ * @returns {boolean}
+ */
+var use_arraybuffer_current_mode = module.exports.is_array_buffer_supported;
+module.exports.use_arraybuffer = function(value) {
+    if (value === undefined) {
+        return use_arraybuffer_current_mode;
+    } else {
+        use_arraybuffer_current_mode = Boolean(value);
+        return use_arraybuffer_current_mode;
+    }
+};
+
+/**
+ * Return a shape of a nested javascript Array.
+ * `options` may have the following properties:
+ *  - allow_empty : Boolean, default false
+ *      If true, this allows an empty array [].
+ *  - throw_if_fail : Boolean, default false
+ *      If true, this throws an Error if a given array does
+ *      not have an appropriate nested structure.
+ *      If false, this returns undefined.
+ * @param {object[]} array
+ * @param {object} [options]
+ * @returns {object[]}
+ */
+module.exports.get_nested_array_shape = function(array, options) {
+    options = options || {};
+    var allow_empty = options.allow_empty || false;
+    var throw_if_fail = options.throw_if_fail || false;
+    var type, i;
+
+    var is_number_or_boolean = function(x) {
+        return typeof x == 'number' || typeof x == 'boolean';
+    };
+
+    var is_number_or_array_or_boolean = function(x) {
+        return (
+            Array.isArray(x) || typeof x == 'number' || typeof x == 'boolean'
+        );
+    };
+
+    // This returns a nested array's shape or raise.
+    var impl = function(array) {
+        var i, j, shape, this_shape;
+        if (!Array.isArray(array)) {
+            throw new Error('not an array');
+        } else if (array.length == 0) {
+            // This is an empty array.
+            if (allow_empty) {
+                return [];
+            } else {
+                throw new Error('empty array');
+            }
+        } else if (array.every(is_number_or_boolean)) {
+            // This is a flat array.
+            return [array.length];
+        } else if (array.every(Array.isArray)) {
+            shape = impl(array[0]);
+            for (i=1; i&lt;array.length; i++) {
+                this_shape = impl(array[i]);
+                if (shape.length != this_shape.length) {
+                    throw new Error('subarrays shape mismatch');
+                }
+                for (j=0; j&lt;shape.length; j++) {
+                    if (shape[j] != this_shape[j]) {
+                        throw new Error('subarrays shape mismatch');
+                    }
+                }
+            }
+            if (shape.length == 0) {
+                // subarrays are []s.  Return an empty shape.
+                return [];
+            } else {
+                return [array.length].concat(shape);
+            }
+        } else if (array.every(is_number_or_array_or_boolean)) {
+            type = [];
+            for (i=0; i&lt;array.length; i++) {
+                if (Array.isArray(array[i])) {
+                    type.push('array');
+                } else {
+                    type.push(typeof array[i]);
+                }
+            }
+            throw new Error('mixed numeric and arrays: [' + type + '].');
+        } else {
+            type = [];
+            for (i=0; i&lt;array.length; i++) {
+                if (Array.isArray(array[i])) {
+                    type.push('array');
+                } else {
+                    type.push(typeof array[i]);
+                }
+            }
+            throw new Error('invalid objects: [' + type + '].');
+        }
+    };  // impl
+
+    if (throw_if_fail) {
+        return impl(array);
+    }
+    try {
+        return impl(array);
+    } catch(e) {
+        return;
+    }
+};  // np.testing.get_nested_array_shape
+
+if (module.exports.msieversion > 0) {
+    /**
+     * Determine whether the passed value is a TypedArray.
+     */
+    module.exports.isTypedArray = function(value) {
+        // This is not very precise test but anyway...
+        return module.exports.is_array_buffer_supported &amp;&amp;
+                (value.byteLength !== undefined);
+    };  // module.exports.isTypedArray
+} else {
+    var TypedArray = Object.getPrototypeOf(Int32Array);
+    /**
+     * Determine whether the passed value is a TypedArray.
+     */
+    module.exports.isTypedArray = function(value) {
+        return module.exports.is_array_buffer_supported &amp;&amp;
+                (value instanceof TypedArray);
+    };  // module.exports.isTypedArray
+}
+
+globally_exported.nan = NaN;
+globally_exported.inf = Infinity;
+globally_exported.None = null;
+
+/**
+ * Return true if a given object is number including nan and infinity.
+ * @param {object} value
+ * @returns {Boolean}
+ */
+globally_exported.isnumber = function(value) {
+    return typeof value === 'number';
+};  // isnumber
+
+/**
+ * Return true if a given object is NaN.
+ * This is equivalent to Number.isNaN, if it's available.
+ * @param {object} value
+ * @returns {Boolean}
+ */
+globally_exported.isnan = Number.isNaN || function(value) {
+    return value !== value;
+};  // isnan
+
+/**
+ * Return true if a given object is a finite number.
+ * This is equivalent to Number.isFinite, if it's available.
+ * @param {object} value
+ * @returns {Boolean}
+ */
+globally_exported.isfinite = Number.isFinite || function(value) {
+    return typeof value === 'number' &amp;&amp; isFinite(value);
+};  // isfinite
+
+/**
+ * Return true if a given object is positive or negative inifinity.
+ * @param {object} value
+ * @returns {Boolean}
+ */
+globally_exported.isinf = function(value) {
+    return (
+        (typeof value == 'number') &amp;&amp; ((value == Infinity) || (value == -Infinity))
+    );
+};  // isinf
+
+/**
+ * Determine whether the passed value is an integer.
+ * This is equivalent to Number.isInteger, if it's available.
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isInteger
+ */
+module.exports.isinteger = Number.isInteger || function(value) {
+    return typeof value === 'number' &amp;&amp;
+            isFinite(value) &amp;&amp;
+            Math.floor(value) === value;
+};  // isinteger
+
+/**
+ * Determine whether the passed value is 0 or 1.
+ */
+module.exports.isbinary = function(value, allow_bool) {
+    if (allow_bool)
+        return (value == 0) || (value == 1);
+    else
+        return typeof value === 'number' &amp;&amp; ((value == 0) || (value == 1));
+};  // isbinary
+
+/**
+ * Determine whether the passed value is 0 or 1.
+ */
+module.exports.isbool = function(value) {
+    return typeof value === 'boolean';
+};  // isboolean
+
+/**
+ * Determine whether the passed value is a positive number, including np.inf.
+ */
+module.exports.ispositive = function(value) {
+    return module.exports.isnumber(value) &amp;&amp; (value > 0);
+};  // ispositive
+
+/**
+ * Determine whether the passed value is a nonnegative number, including np.inf.
+ */
+module.exports.isnonnegative = function(value) {
+    return module.exports.isnumber(value) &amp;&amp; (value >= 0);
+};  // isnonnegative
+
+/**
+ * Determine whether the passed value is a bigint.
+ */
+module.exports.isbigint = function(value) {
+    var typeofa = typeof a;  // linter complains "(typeof a) == 'bigint'".
+    return typeofa == 'bigint';
+};  // isbigint
+
+/**
+ * Returns the integer part of a number by removing any fractional digits.
+ * This is equivalent to Number.trunc, if it's available.
+ * @param {Number} v
+ * @returns {Number} i
+ */
+module.exports.trunc = Number.trunc || function(v) {
+    return v &lt; 0 ? Math.ceil(v) : Math.floor(v);
+};  // module.exports.trunc
+
+var is_float_array = module.exports.is_float_array = function(a) {
+    return (Array.isArray(a) &amp;&amp; Array.prototype.every.call(a, module.exports.isnumber));
+};
+
+var is_boolean_array = module.exports.is_boolean_array = function(a) {
+    return (Array.isArray(a) &amp;&amp; Array.prototype.every.call(a, module.exports.isbool));
+};
+
+var is_binary_array = module.exports.is_binary_array = function(a) {
+    return (Array.isArray(a) &amp;&amp; Array.prototype.every.call(a, module.exports.isbinary));
+};
+
+var is_integer_array = module.exports.is_integer_array = function(a) {
+    return (Array.isArray(a) &amp;&amp; Array.prototype.every.call(a, module.exports.isinteger));
+};
+
+/**
+ * Compute a default stride of a given shape.
+ * @param {object[]} shape
+ * @returns {object[]} stride
+ */
+var default_stride = module.exports.default_stride = function(shape) {
+    var stride = [];
+    var buf = 1;
+    var i;
+    for (i = 0; i &lt; shape.length; i++) {
+        stride.splice(0, 0, buf);
+        buf *= shape[shape.length - i - 1];
+    }
+    return stride;
+};
+
+/**
+ * Given a shape, return an iterator to iterate over all elements.
+ * @param {int[]} shape
+ * @returns {iterator}
+ */
+var iterator_from_shape = module.exports.iterator_from_shape = function(shape) {
+    var value = [];
+    var i;
+    if (!jsarray.allpositive(shape))
+        // If some elements are nonpositive, return an iterator which
+        // terminates immediately.
+        return {
+            next: function() {return {done: true};}
+        };
+    for (i = 0; i &lt; shape.length; i++) {
+        value.push(0);
+    }
+    value[value.length - 1] = -1;
+    return {
+        value: value,
+        done: false,
+        next: function() {
+            var i, idx, v;
+            if (this.done)
+                return {done: true};
+            for (i = 0; i &lt; this.value.length; i++) {
+                idx = this.value.length - i - 1;
+                if (this.value[idx] &lt; shape[idx] - 1) {
+                    this.value[idx]++;
+                    return {
+                        value: this.value,
+                        done: false
+                    };
+                } else {
+                    this.value[idx] = 0;
+                }
+            }
+            this.done = true;
+            return {
+                done: true
+            };
+        }
+    };
+};
+
+// Define some utilities on javascript naitive arrays.
+var jsarray = module.exports.jsarray = {};
+
+jsarray.allpositive = function(array) {
+    return Array.prototype.every.call(array, module.exports.ispositive);
+};
+
+jsarray.allnonnegative = function(array) {
+    return Array.prototype.every.call(array, module.exports.isnonnegative);
+};
+
+jsarray.neg = function(array) {
+    if (is_boolean_array(array)) {
+        return array.map(function(x) {return !x;});
+    } else {
+        return array.map(function(x) {return (x == 0) ? x : -x;});
+    }
+};
+
+jsarray.nonzero = function(array) {
+    var i, n = array.length, ret = [];
+    for (i = 0; i &lt; n; i++)
+        if (array[i] != 0)
+            ret.push(i);
+    return ret;
+};
+
+/**
+ * Get indexed/sliced elements.
+ * `index` must be an Array of int, slice and/or array-like objects.
+ * @param {ArrayLike} a - array to be indexed/sliced.
+ * @param {(int[]|string[]|ArrayLike[])} index - index.
+ * @returns {object|ndarray}
+ */
+jsarray.get = function(array, index) {
+    // array = jsarray.flatten(array);
+    var n;
+    var ret = [];
+    var i;
+    if (index.length == 0) {
+        return [];
+    } else if (is_boolean_array(index)) {
+        // Array of booleans.
+        if (array.length != index.length) {
+            throw new Error('invalid index size ' + index.length + ' for an array of size ' + array.length);
+        }
+        n = array.length;
+        for (i = 0; i &lt; n; i++) {
+            if (index[i])
+                ret.push(array[i]);
+        }
+        return ret;
+    } else if (is_float_array(index)) {
+        // Array of numbers.
+        n = index.length;
+        for (i = 0; i &lt; n; i++) {
+            if ((index[i] &lt; -array.length) || (index[i] >= array.length))
+                throw new Error('invalid index ' + index + ' for an array of size ' + array.length);
+            else if (index[i] &lt; 0)
+                ret.push(array[array.length + index[i]]);
+            else
+                ret.push(array[index[i]]);
+        }
+        return ret;
+    } else {
+        if ((index &lt; -array.length) || (index >= array.length))
+            throw new Error('invalid index ' + index + ' for an array of size ' + array.length);
+        else if (index &lt; 0)
+            return array[array.length + index];
+        else
+            return array[index];
+    }
+};
+
+/**
+ * Return evenly spaced values within a given interval.
+ * @param {int} [start]
+ * @param {int} stop
+ * @param {int} [step]
+ * @returns {ndarray}
+ */
+jsarray.arange = function(start, stop, step) {
+    if (start === undefined) {
+        throw new Error('at least one argument must be given.');
+    } else if (stop === undefined) {
+        stop = start;
+        start = 0;
+        step = 1;
+    } else if (step === undefined) {
+        start = start;
+        stop = stop;
+        step = 1;
+    }
+    var numel = Math.ceil((stop-start)/step);
+    var shape = [numel];
+    var array = [];
+    var i;
+    for (i = 0; i &lt; numel; i++) {
+        array.push(Math.round(start + step*i));
+    }
+    return array;
+};  // np.arange
+
+// Return a new array of given shape and type, filled with `fill_value`.
+jsarray.full = function(shape, fill_value) {
+    if (arguments.length &lt; 1 || arguments.length > 3) {
+        throw new Error('invalid number of arguments:' + JSON.stringify(arguments));
+    }
+    if (!Array.isArray(shape)) {
+        shape = [shape];
+    }
+    var size = jsarray.prod(shape);
+    var ret = [];
+    var i;
+    for (i = 0; i &lt; size; i++)
+        ret.push(fill_value);
+    return jsarray.reshape(ret, shape);
+};
+
+/**
+ * Compute sum of all elements.
+ * @param {int[]} a - array of numbers.
+ * @returns {int} product of all elements in a.
+ */
+jsarray.sum = function(a) {
+    var ret = 0;
+    var i;
+    for (i = 0; i &lt; a.length; i++) {
+        ret += a[i];
+    }
+    return ret;
+};
+
+/**
+ * Compute product of all elements.
+ * @param {int[]} a - array of numbers.
+ * @returns {int} product of all elements in a.
+ */
+jsarray.prod = function(a) {
+    var ret = 1;
+    var i;
+    for (i = 0; i &lt; a.length; i++) {
+        ret *= a[i];
+    }
+    return ret;
+};
+
+/**
+ * Compute dot product of two js arrays.
+ * @param {int[]} a, b - arrays of numbers.
+ * @returns {int} dot product of a and b.
+ */
+jsarray.dot = function(a, b) {
+    var i;
+    var ret = 0;
+    var n = Math.min(a.length, b.length);
+    for (i = 0; i &lt; n; i++) {
+        ret += a[i] * b[i];
+    }
+    return ret;
+};
+
+/**
+ * Flatten a nested javascript native array or typed array.
+ * This returns a given array if it is not nested.
+ * @param {object[]}
+ * @returns {object[]}
+ */
+jsarray.flatten = function(array) {
+    while (Array.prototype.some.call(array, Array.isArray)) {
+        array = array.reduce(function (acc, val) {return acc.concat(val);}, []);
+    }
+    return array;
+};  // jsarray.flatten
+
+/**
+ * Reshape a js array.
+ * @param {object[]} array - array holding data.
+ * @param {int[]} shape - shape of created array.
+ * @param {int} [offset=0] - offset of array data in buffer.
+ * @param {int[]} [stride] - strides of data in memory.
+ * @returns {object[]} a new array of a given shape.
+ */
+jsarray.reshape = function(array, shape, offset, stride) {
+    var it = iterator_from_shape(shape);
+    var v = it.next();
+    var pointer;
+    var ret = [];
+    var size, buf, i, tail;
+
+    if (!jsarray.allpositive(shape)) {
+        throw new Error("invalid shape: " + shape);
+    }
+
+    if (offset == undefined) {
+        offset = 0;
+    }
+
+    if (stride == undefined) {
+        stride = default_stride(shape);
+    }
+
+    // Extract elements from `array` and collect in a flat `ret` array.
+    array = jsarray.flatten(array);
+    while (!v.done) {
+        pointer = jsarray.dot(v.value, stride) + offset;
+        if (pointer &lt; 0 || pointer >= array.length) {
+            throw new Error(
+                'invalid arguments. given array size: ' + array.length +
+                '  shape: ' + shape +
+                '  offset: ' + offset +
+                '  stride: ' + stride
+            );
+        }
+        ret.push(array[pointer]);
+        v = it.next();
+    }
+
+    // Reshape `ret`.
+    for (i = 0; i &lt; shape.length - 1; i++) {
+        size = shape[shape.length - i - 1];
+        buf = [];
+        while (ret.length > 0) {
+            tail = ret.splice(size);
+            buf.push(ret);
+            ret = tail;
+        }
+        ret = buf;
+    }
+    return ret;
+};  // jsarray.reshape
+
+/**
+ * Creates a new, shallow-copied Array instance from an array-like
+ * or iterable object.
+ * @param {ArrayLike} An array-like or iterable object to convert to an array.
+ * @param {function} Map function to call on every element of the array.
+ * @param {this} Value to use as this when executing mapFn.
+ * @returns {Array} A new Array instance.
+ */
+jsarray.from = (function(arrayLike) {
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
+    // Production steps of ECMA-262, Edition 6, 22.1.2.1
+    if (Array.from) {
+        return Array.from;
+    } else {
+        var toStr = Object.prototype.toString;
+        var isCallable = function (fn) {
+            return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+        };
+        var toInteger = function (value) {
+            var number = Number(value);
+            if (isNaN(number)) { return 0; }
+            if (number === 0 || !isFinite(number)) { return number; }
+            return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+        };
+        var maxSafeInteger = Math.pow(2, 53) - 1;
+        var toLength = function (value) {
+            var len = toInteger(value);
+            return Math.min(Math.max(len, 0), maxSafeInteger);
+        };
+
+        // The length property of the from method is 1.
+        return function from(arrayLike/*, mapFn, thisArg */) {
+            // 1. Let C be the this value.
+            var C = this;
+
+            // 2. Let items be ToObject(arrayLike).
+            var items = Object(arrayLike);
+
+            // 3. ReturnIfAbrupt(items).
+            if (arrayLike == null) {
+                throw new TypeError('Array.from requires an array-like object - not null or undefined');
+            }
+
+            // 4. If mapfn is undefined, then let mapping be false.
+            var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+            var T;
+            if (typeof mapFn !== 'undefined') {
+                // 5. else
+                // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+                if (!isCallable(mapFn)) {
+                    throw new TypeError('Array.from: when provided, the second argument must be a function');
+                }
+
+                // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
+                if (arguments.length > 2) {
+                    T = arguments[2];
+                }
+            }
+
+            // 10. Let lenValue be Get(items, "length").
+            // 11. Let len be ToLength(lenValue).
+            var len = toLength(items.length);
+
+            // 13. If IsConstructor(C) is true, then
+            // 13. a. Let A be the result of calling the [[Construct]] internal method
+            // of C with an argument list containing the single item len.
+            // 14. a. Else, Let A be ArrayCreate(len).
+            var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+
+            // 16. Let k be 0.
+            var k = 0;
+            // 17. Repeat, while k &lt; len… (also steps a - h)
+            var kValue;
+            while (k &lt; len) {
+                kValue = items[k];
+                if (mapFn) {
+                    A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                } else {
+                    A[k] = kValue;
+                }
+                k += 1;
+            }
+            // 18. Let putStatus be Put(A, "length", len, true).
+            A.length = len;
+            // 20. Return A.
+            return A;
+        };
+    }
+})();  // module.exports.jsarray.from
+
+for (var key in globally_exported)
+    module.exports[key] = globally_exported[key];
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="ndarray.html">ndarray</a></li></ul><h3>Global</h3><ul><li><a href="global.html#_apply_basic_indexing">_apply_basic_indexing</a></li><li><a href="global.html#_buffer_pointer">_buffer_pointer</a></li><li><a href="global.html#_get_reshaped_stride">_get_reshaped_stride</a></li><li><a href="global.html#_merge_dims">_merge_dims</a></li><li><a href="global.html#accessor_impl">accessor_impl</a></li><li><a href="global.html#add_tail">add_tail</a></li><li><a href="global.html#arange">arange</a></li><li><a href="global.html#asarray">asarray</a></li><li><a href="global.html#ascontiguous">ascontiguous</a></li><li><a href="global.html#default_stride">default_stride</a></li><li><a href="global.html#expand_dims">expand_dims</a></li><li><a href="global.html#expand_ellipsis">expand_ellipsis</a></li><li><a href="global.html#expand_newaxis">expand_newaxis</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#get_nested_array_shape">get_nested_array_shape</a></li><li><a href="global.html#get_pointer">get_pointer</a></li><li><a href="global.html#getitem">getitem</a></li><li><a href="global.html#is_string_integer">is_string_integer</a></li><li><a href="global.html#isbigint">isbigint</a></li><li><a href="global.html#isbinary">isbinary</a></li><li><a href="global.html#isbool">isbool</a></li><li><a href="global.html#isinteger">isinteger</a></li><li><a href="global.html#isndarray">isndarray</a></li><li><a href="global.html#isnonnegative">isnonnegative</a></li><li><a href="global.html#ispositive">ispositive</a></li><li><a href="global.html#isTypedArray">isTypedArray</a></li><li><a href="global.html#iterator_from_shape">iterator_from_shape</a></li><li><a href="global.html#msieversion">msieversion</a></li><li><a href="global.html#normalize_index">normalize_index</a></li><li><a href="global.html#parse_integer_and_slice">parse_integer_and_slice</a></li><li><a href="global.html#parse_slice">parse_slice</a></li><li><a href="global.html#reshape">reshape</a></li><li><a href="global.html#set">set</a></li><li><a href="global.html#setitem">setitem</a></li><li><a href="global.html#shares_memory">shares_memory</a></li><li><a href="global.html#Slice">Slice</a></li><li><a href="global.html#strip_commans">strip_commans</a></li><li><a href="global.html#trunc">trunc</a></li><li><a href="global.html#use_arraybuffer_current_mode">use_arraybuffer_current_mode</a></li><li><a href="global.html#use_newaxis_and_ellipsis">use_newaxis_and_ellipsis</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sun Dec 04 2022 10:50:36 GMT+0000 (Coordinated Universal Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

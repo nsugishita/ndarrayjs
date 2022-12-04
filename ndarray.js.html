@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ndarray.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ndarray.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use strict";
+
+var dtype_module = require('./dtype');
+var helper = require('./helper');
+var jsarray = helper.jsarray;
+
+module.exports._set_alias = function(np) {
+    var key;
+    for (key in module.exports) {
+        if (key.startsWith('_'))
+            continue;
+        np[key] = module.exports[key];
+    }
+};
+
+var ndarray;
+/**
+ * Array object to represent a multidimensional, homogeneous array.
+ * This is not supposed to be called by a user.  Use np.array or
+ * np.asarray to create a new array from a buffer/Array.
+ * For developers, this is a function constructor so make sure to use
+ * the new operator.
+ *
+ * @class
+ * @constructor
+ * @param {buffer|Array|ndarray} buffer - Object holding data.
+ * @param {int[]} shape - Shape of created array.
+ * @param {string} dtype - Data type of elements.
+ * @param {int} [offset=0] - Offset of array data in buffer.
+ * @param {int[]} [stride] - Strides of data in memory.
+ * @param {Boolean} [check=true] - Check whether given data is consistent or not.
+ * @returns {ndarray} A new array with given data.
+ */
+ndarray = module.exports.ndarray = function(buffer, shape, dtype, offset, stride, check) {
+    if (offset == undefined) {
+        offset = 0;
+    }
+    if (stride == undefined) {
+        stride = helper.default_stride(shape);
+    }
+    this.shape = shape;
+    if (shape.length >= 1) {
+        this.size = shape.reduce(function (acc, val) {return acc * val;});
+    } else {
+        this.size = 1;
+    }
+    this.ndim = shape.length;
+    if (dtype == undefined) {
+        this.dtype = dtype_module.float;
+    } else {
+        this.dtype = dtype;
+    }
+    if (!isNaN(buffer)) {
+        var tmp = buffer;
+        buffer = new dtype_module.arraybuffer[this.dtype](1);
+        buffer[0] = tmp;
+    }
+    this.buffer = buffer;
+    this.offset = offset;
+    this.stride = stride;
+    this.__ndarray__ = true;
+};
+
+ndarray.prototype.tojs = function() {
+    if (this.shape.length == 0) {
+        return this.buffer[this.offset];
+    } else {
+        return jsarray.reshape(
+            this.buffer, this.shape, this.offset, this.stride
+        );
+    }
+};
+
+/**
+ * Return an ndarray instance.
+ * This return an ndarray instance.  If possible, data is not copied so
+ * a returned array shares data with the original array.
+ * @param {buffer|Array|ndarray} buffer - Object holding data.
+ * @param {int[]} shape - Shape of created array.
+ * @param {string} dtype - Data type of elements.
+ * @param {int} [offset]
+ * @param {int[]} [stride]
+ * @returns {ndarray} ndarray.
+ */
+module.exports.asarray = function(buffer, shape, dtype, offset, stride, check) {
+    if (module.exports.isndarray(buffer)) {
+        if (dtype === undefined) {
+            return buffer;
+        } else {
+            return module.exports.astype(buffer, dtype);  // TODO
+        }
+    }
+    dtype = dtype || dtype_module.float;
+    var flattened = jsarray.flatten(buffer);
+    if (helper.use_arraybuffer()) {
+        if (Array.isArray(buffer)) {
+            if (!Array.isArray(shape)) {
+                shape = helper.get_nested_array_shape(
+                    buffer, {throw_if_fail: true});
+            }
+            var TypedArray = dtype_module.arraybuffer[dtype];
+            buffer = new TypedArray(flattened.length);
+            var i;
+            for (i = 0; i &lt; flattened.length; i++) {
+                buffer[i] = flattened[i];
+            }
+            return new ndarray(buffer ,shape, dtype, offset, stride, check);
+        } else if (helper.isTypedArray(buffer)) {
+            shape = shape || [buffer.length];
+            return new ndarray(buffer, shape, dtype, offset, stride, check);
+        } else if (!isNaN(buffer)) {
+            shape = shape || [];
+            return new ndarray(buffer, shape, dtype, offset, stride, check);
+        } else {
+            throw new Error('invalid argument ' + (typeof buffer));
+        }
+    } else {
+        if (!Array.isArray(shape)) {
+            shape = helper.get_nested_array_shape(
+                buffer, {throw_if_fail: true});
+        }
+        return new ndarray(flattened, shape, dtype, offset, stride, check);
+    }
+};  // np.asarray
+
+/**
+ * Check whether a given object is an ndarray or not.
+ * This can take null or undefined, returning false in such cases.
+ * @param {object} a
+ * @returns {bool} result - True if `a` is an ndarray instance.
+ */
+module.exports.isndarray = function(a) {
+    return (a !== null) &amp;&amp; (a !== undefined) &amp;&amp; (a instanceof ndarray);
+};
+
+/**
+ * Check whether given arrays share the underlying data.
+ * @param {object} a, b
+ * @returns {bool} result - True if `a` and `b` shares memory.
+ */
+module.exports.shares_memory = function(a, b) {
+    return (
+        module.exports.isndarray(a) &amp;&amp; module.exports.isndarray(b) &amp;&amp; (a.buffer === b.buffer)
+    );
+};
+
+/**
+ * Get an item from an array.
+ * `index` must be an Array of int, whose length is equal to the dimension
+ * of the array.
+ * @param {array-like} a - array to be indexed/sliced.
+ * @param {int[]} index - index.
+ * @returns {object}
+ */
+var getitem = module.exports.getitem = function(a, index) {
+    return a.buffer[get_pointer(a, index)];
+};  // np.getitem
+
+/**
+ * Set a value on a specified position.
+ * Note the order of arguments are different from python setter.
+ * @param {array-like} a - array to be indexed/sliced.
+ * @param {int|float|ndarray} value - value to be set.
+ * @param {int[]} index - index.
+ * @returns {object|ndarray}
+ */
+var setitem = module.exports.setitem = function(a, index, value) {
+    a.buffer[get_pointer(a, index)] = value;
+};  // np.setitem
+
+/**
+ * Get a pointer of an item of the given index in the buffer.
+ * @param {array-like}
+ * @param {int[]} index
+ * @returns {int} pointer -  a[index] == a.buffer[pointer]
+ */
+var get_pointer = function(a, index) {
+    var cursor, i, idx;
+    if (a.ndim == 0) {
+        if ((index != undefined) &amp;&amp; (index.length > 0)) {
+            throw new Error(
+                'invalid index [' + index + '] for a ' + a.ndim +
+                ' dimensional array.'
+            );
+        }
+        return a.offset;
+    }
+    if (index.length !== a.ndim) {
+        throw new Error(
+            'invalid index [' + index + '] for a ' + a.ndim +
+            ' dimensional array.'
+        );
+    }
+    cursor = a.offset;
+    for (i = 0; i &lt; a.ndim; i++) {
+        idx = index[i];
+        if (idx &lt; -a.shape[i] || idx >= a.shape[i]) {
+            throw new Error(
+                'invalid index [' + index + '] for an array of shape (' +
+                a.shape + ').'
+            );
+        } else if (idx &lt; 0) {
+            idx += a.shape[i];
+        }
+        cursor += idx * a.stride[i];
+    }
+    return cursor;
+};  // get_pointer
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="ndarray.html">ndarray</a></li></ul><h3>Global</h3><ul><li><a href="global.html#_apply_basic_indexing">_apply_basic_indexing</a></li><li><a href="global.html#_buffer_pointer">_buffer_pointer</a></li><li><a href="global.html#_get_reshaped_stride">_get_reshaped_stride</a></li><li><a href="global.html#_merge_dims">_merge_dims</a></li><li><a href="global.html#accessor_impl">accessor_impl</a></li><li><a href="global.html#add_tail">add_tail</a></li><li><a href="global.html#arange">arange</a></li><li><a href="global.html#asarray">asarray</a></li><li><a href="global.html#ascontiguous">ascontiguous</a></li><li><a href="global.html#default_stride">default_stride</a></li><li><a href="global.html#expand_dims">expand_dims</a></li><li><a href="global.html#expand_ellipsis">expand_ellipsis</a></li><li><a href="global.html#expand_newaxis">expand_newaxis</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#get_nested_array_shape">get_nested_array_shape</a></li><li><a href="global.html#get_pointer">get_pointer</a></li><li><a href="global.html#getitem">getitem</a></li><li><a href="global.html#is_string_integer">is_string_integer</a></li><li><a href="global.html#isbigint">isbigint</a></li><li><a href="global.html#isbinary">isbinary</a></li><li><a href="global.html#isbool">isbool</a></li><li><a href="global.html#isinteger">isinteger</a></li><li><a href="global.html#isndarray">isndarray</a></li><li><a href="global.html#isnonnegative">isnonnegative</a></li><li><a href="global.html#ispositive">ispositive</a></li><li><a href="global.html#isTypedArray">isTypedArray</a></li><li><a href="global.html#iterator_from_shape">iterator_from_shape</a></li><li><a href="global.html#msieversion">msieversion</a></li><li><a href="global.html#normalize_index">normalize_index</a></li><li><a href="global.html#parse_integer_and_slice">parse_integer_and_slice</a></li><li><a href="global.html#parse_slice">parse_slice</a></li><li><a href="global.html#reshape">reshape</a></li><li><a href="global.html#set">set</a></li><li><a href="global.html#setitem">setitem</a></li><li><a href="global.html#shares_memory">shares_memory</a></li><li><a href="global.html#Slice">Slice</a></li><li><a href="global.html#strip_commans">strip_commans</a></li><li><a href="global.html#trunc">trunc</a></li><li><a href="global.html#use_arraybuffer_current_mode">use_arraybuffer_current_mode</a></li><li><a href="global.html#use_newaxis_and_ellipsis">use_newaxis_and_ellipsis</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sun Dec 04 2022 10:50:36 GMT+0000 (Coordinated Universal Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
