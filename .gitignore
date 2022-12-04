@@ -12,6 +12,10 @@ dist
 node_modules
 .npm
 
+# doc
+
+doc/html
+
 
 # python
 __pycache__

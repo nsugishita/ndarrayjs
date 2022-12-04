@@ -51,6 +51,14 @@ module.exports = function(grunt) {
                 command: 'qunit'
             },
         },
+        jsdoc: {
+            dist: {
+                src: ['lib/*.js', 'doc/README.md'],
+                options: {
+                    destination: 'doc/html'
+                }
+            }
+        },
         watch: {
             gruntfile: {
                 files: '<%= jshint.gruntfile.src %>',
@@ -58,7 +66,7 @@ module.exports = function(grunt) {
             },
             lib: {
                 files: '<%= jshint.lib.src %>',
-                tasks: ['jshint:lib', 'shell:test', 'browserify']
+                tasks: ['jshint:lib', 'shell:test', 'browserify', 'jsdoc']
             },
             test: {
                 files: '<%= jshint.test.src %>',
@@ -72,6 +80,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-browserify');
     grunt.loadNpmTasks('grunt-shell');
+    grunt.loadNpmTasks("grunt-jsdoc");
 
     // Build a distributable release
     grunt.registerTask('dist', ['browserify', 'shell:test', 'uglify']);

@@ -7,6 +7,8 @@
     "test": "test"
   },
   "dependencies": {
+    "grunt-jsdoc": "^2.4.1",
+    "jsdocs": "^1.0.0",
     "jszip": "^3.3.0",
     "jszip-utils": "^0.1.0"
   },

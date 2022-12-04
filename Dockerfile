@@ -2,11 +2,11 @@
 
 FROM node:19
 
+# Define working directory.
+WORKDIR /home/app
+
 # Install Bower & Grunt
 RUN npm install -g grunt-cli
-
-# Define working directory.
-WORKDIR /root
 
 # Define default command.
 CMD ["bash"]
